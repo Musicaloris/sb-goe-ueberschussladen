@@ -43,7 +43,7 @@ goe_mqtt_url = 'http://' + konf['goe_adresse'] + '/mqtt?payload='  # Nutzt V1 AP
 zyklus_timestamp = time.time() - konf['wartezeit']  # Zeitstempel in der Vergangenheit initialisieren
 sb_status = {'objekt': 'SB', 'zeitstempel': zyklus_timestamp}  # Standard-Objektzustand
 goe_status = {'objekt': 'Go-E', 'zeitstempel': zyklus_timestamp}  # Standard-Objektzustand
-forrest = "run"  # Variable zur Kontrolle der Hauptschleife
+forrest = 'run'  # Variable zur Kontrolle der Hauptschleife
 goe_stop_laden = False
 ladeleistung = {'W': 'undefiniert'}  # Standard-Objektzustand
 keyboard.add_hotkey('ctrl+ä', hotkey)  # Hotkey zum regulären Beenden der Hauptschleife aktivieren
@@ -60,9 +60,9 @@ if konf['logging_nrg'] or konf['logging_events']:
         print('Verzeichnis <logs> wurde erstellt.')
     except FileExistsError:
         pass
-    except Exception as err:
+    except Exception as ordner_err:
         print('!!!!Fehler beim Erstellen des Verzeichnisses <logs>:')
-        print(err)
+        print(ordner_err)
         raise
 
 # Programmkopf Konfigurationswerte ausgeben
@@ -85,10 +85,10 @@ print()
 print('-' * 10)
 
 #########################################
-while forrest == "run":  # Programm-Hauptschleife. Ist wie eine Schachtel Pralinen.
+while forrest == 'run':  # Programm-Hauptschleife. Ist wie eine Schachtel Pralinen.
     # Daten aktualisieren zum Schleifenbeginn
-    goe_status_puffer = daten_holen("Go-E", goe_status, goe_status_url, konf)
-    sb_status_puffer = daten_holen("SB", sb_status, sb_status_url, konf)
+    goe_status_puffer = daten_holen('Go-E', goe_status, goe_status_url, konf)
+    sb_status_puffer = daten_holen('SB', sb_status, sb_status_url, konf)
 
     # Konnten die Daten erfolgreich abgeholt werden?
     if 'status_code' in goe_status and 'status_code' in sb_status:  # Daten holen war iO, ab in die Status-Objekte damit
@@ -99,7 +99,7 @@ while forrest == "run":  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
         abwarten(True, konf, zyklus_timestamp)
         continue
 
-    ladekurve[int(goe_status['amp'])] = goe_status["nrg"][11] * 10  # ladekurve mit aktuellem Datenpunkt updaten
+    ladekurve[int(goe_status['amp'])] = goe_status['nrg'][11] * 10  # ladekurve mit aktuellem Datenpunkt updaten
     ladeleistung = goe_ladeleistung_bestimmen(sb_status, goe_status, ladekurve, konf)  # Ladeleistung bestimmen
 
     # Es gibt Daten von Go-E und SB, aktuelle Daten ausgeben
@@ -129,7 +129,7 @@ while forrest == "run":  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
     print('Meldungen:')
 
     # Liegt ein Fehler am go-E an? Automatischer Reset-Versuch.
-    if not goe_status['err'] == "0":
+    if not goe_status['err'] == '0':
         log_event(f'Am go-eCharger liegt ein Fehler an: {konf["goe_err"][goe_status["err"]]}', konf)
         log_event('Versuche automatischen Reset / Reboot über MQTT.', konf)
         try:
@@ -143,10 +143,10 @@ while forrest == "run":  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
             forrest = 'Go-E Fehler lässt sich nicht resetten'
         else:
             if goe_rst.status_code == 200:
-                goe_rst = bool(int(goe_rst.json()["rbc"]) > int(goe_status["rbc"]))
+                goe_rst = bool(int(goe_rst.json()['rbc']) > int(goe_status['rbc']))
             else:
                 log_event(f'Go-E MQTT HTTP Fehler Status {goe_rst.status_code}', konf)
-        log_event(f'Automatischer Reset / Reboot war {"nicht " * goe_rst}erfolgreich.', konf)
+        log_event(f'Automatischer Reset / Reboot war {"nicht" * goe_rst}erfolgreich.', konf)
         if not goe_rst:
             forrest = 'Go-E Fehler lässt sich nicht resetten'
         zyklus_timestamp = time.time()
@@ -155,29 +155,30 @@ while forrest == "run":  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
             continue
 
     # ist ein Auto angeschlossen und bereit?
-    if goe_status['car'] == "1":
-        log_event('Kein Fahrzeug am Go-eCharger angeschlossen.', konf)
-    elif goe_status['car'] == "2":
-        if goe_status["nrg"][11] * 10 == 0:
-            log_event('Fahrzeug ist am Go-eCharger angeschlossen und bereit zum Laden.', konf)
-        else:
-            log_event('Fahrzeug ist am Go-eCharger angeschlossen und lädt.', konf)
-    elif goe_status['car'] == "3":
-        log_event('Go-eCharger wartet auf Fahrzeug.', konf)
-        zyklus_timestamp = time.time()
-        abwarten(False, konf, zyklus_timestamp)
-    elif goe_status['car'] == "4":
-        log_event('Go-eCharger meldet Ladung beendet (manuell, durch Go-E oder durch Auto), Auto angeschlossen.', konf)
-        # Default-Ladekurve laden, da beim Beenden Ladeleistung und Strom entkoppelt sind
-        for datenpunkt_a, datenpunkt_w in konf['ladekurve'].items():
-            ladekurve[str(datenpunkt_a)] = datenpunkt_w
+    match goe_status['car']:
+        case '1':
+            log_event('Kein Fahrzeug am Go-eCharger angeschlossen.', konf)
+        case '2':
+            if goe_status["nrg"][11] * 10 == 0:
+                log_event('Fahrzeug ist am Go-eCharger angeschlossen und bereit zum Laden.', konf)
+            else:
+                log_event('Fahrzeug ist am Go-eCharger angeschlossen und lädt.', konf)
+        case '3':
+            log_event('Go-eCharger wartet auf Fahrzeug.', konf)
+            zyklus_timestamp = time.time()
+            abwarten(False, konf, zyklus_timestamp)
+        case '4':
+            log_event('Go-eCharger meldet Ladung beendet (manuell, durch Go-E, durch Auto) & Auto angeschlossen.', konf)
+            # Default-Ladekurve laden, da beim Beenden Ladeleistung und Strom entkoppelt sind
+            for datenpunkt_a, datenpunkt_w in konf['ladekurve'].items():
+                ladekurve[str(datenpunkt_a)] = datenpunkt_w
 
     # Befindet sich der Go-E im Stop-Modus (wurde eine maximale Lademenge definiert)?
-    if goe_status['stp'] == "2":
+    if goe_status['stp'] == '2':
         goe_stop_laden = True
         log_event(f'Automatische Abschaltung nach {goe_status["dwo"] / 10} kWh ist aktiviert.', konf)
         log_event(f'Davon sind bereits {int(goe_status["dws"]) / 3600000} kWh geladen.', konf)
-    elif goe_status['stp'] == "0" and goe_stop_laden:
+    elif goe_status['stp'] == '0' and goe_stop_laden:
         log_event('Das Laden am Go-eCharger wurde durch die automatische Abschaltung beendet, oder die Ladegrenze wurde'
                   ' manuell entfernt.', konf)
         laden_fortsetzen = input('Soll weiter geladen werden? (J/N) >> ')
@@ -200,7 +201,7 @@ while forrest == "run":  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
             else:
                 log_event('Fehler beim Unterbrechen der Fahrzeugladung!', konf)
     elif ladeleistung['A'] >= 6:  # Yaey, es ist genug Ladeleistung da! Ladeleistung setzen!
-        if goe_status['alw'] == "1":  # Wenn Laden schon erlaubt ist, Ladeleistung setzen
+        if goe_status['alw'] == '1':  # Wenn Laden schon erlaubt ist, Ladeleistung setzen
             if goe_setzen('amx', ladeleistung['A'], goe_status, konf):
                 log_event(f'{"[simuliert] " * konf["simulieren"]}Ladestrom-Vorgabe ist {ladeleistung["A"]} A' +
                           f' (war {goe_status["amp"]} A)' * (not int(goe_status["amp"]) == ladeleistung["A"]) +
@@ -217,8 +218,8 @@ while forrest == "run":  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
             log_event('Hinweis: Der Zoe-Modus ist aktiv!', konf)
 
     if konf['logging_nrg']:
-        log_nrg("goe", goe_status, konf)
-        log_nrg("sb", sb_status, konf)
+        log_nrg('goe', goe_status, konf)
+        log_nrg('sb', sb_status, konf)
 
     zyklus_timestamp = time.time()  # Zeitstempel erneuern
     abwarten(False, konf, zyklus_timestamp)

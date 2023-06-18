@@ -52,8 +52,8 @@ def daten_holen(objekt_name: str, objekt: dict, url: str, konf: dict):
         try:
             print(f'    Hole aktuelle Daten von {objekt_name}...', end='', flush=True)
             antwort = requests.get(url, timeout=konf['wartezeit'])
-        except Exception as err:
-            log_event(f'{objekt_name} Verbindungsfehler, Details: {err}', konf)
+        except Exception as connect_err:
+            log_event(f'{objekt_name} Verbindungsfehler, Details: {connect_err}', konf)
         else:
             if antwort.status_code == 200:
                 print('OK')
@@ -78,51 +78,53 @@ def goe_ladeleistung_bestimmen(sb_status_i: dict, goe_status_i: dict, ladekurve:
     import math
 
     goe_leistung_w = goe_status_i['nrg'][11] * 10  # Go-E gibt die Leistung in Vielfachen von 10W aus
-    lade_soll_w = 0
+    lade_soll_w = 0  # Initialisieren
     goe_u = math.fsum(goe_status_i['nrg'][0:3]) / 3  # Durchschnitt über die Spannungen der drei Einzelphasen
 
     print(f'Ladeleistung wird bestimmt im Modus {konf["laden_prio"]}: {konf["laden_prio_text"][konf["laden_prio"]]}.\n')
 
-    if konf['laden_prio'] == 'Überschuss':
-        if sb_status_i['BatteryCharging']:  # SonnenBatterie lädt, SB-Ladestrom muss beschützt werden
-            lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
-                           + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
-                           + sb_status_i['Pac_total_W']  # Ladeleistung SB, negativ beim Aufladen, daher plus
-                           - konf['ladeleistung_puffer_W']  # Einspeisepuffer
-                           )
-        elif sb_status_i['BatteryDischarging']:  # SonnenBatterie entlädt, in diesem Modus nicht erwünscht!
-            lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
-                           + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
-                           - sb_status_i['Pac_total_W']  # Entladeleistung SB, positiv beim Entladen, daher minus
-                           - konf['ladeleistung_puffer_W']  # Einspeisepuffer
-                           )
-        elif not sb_status_i['BatteryDischarging'] and not sb_status_i['BatteryCharging']:  # SonnenBatterie idle
-            lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
-                           + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
-                           - konf['ladeleistung_puffer_W']  # Einspeisepuffer
-                           )
-    elif konf['laden_prio'] == 'PV':
-        lade_soll_w = (sb_status_i["Production_W"]  # Einspeiseleistung
-                       - sb_status_i["Consumption_W"]  # Verbrauch
-                       + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
-                       - konf['ladeleistung_puffer_W']  # Einspeisepuffer
-                       )
-    elif konf['laden_prio'] == 'PV+':
-        if sb_status_i['USOC'] > konf['min_batterie_soc']:
-            lade_soll_w = (sb_status_i['Production_W']  # PV-Leistung
-                           - sb_status_i['Consumption_W']  # Haus-Verbrauch inkl. go-E Ladeleistung
-                           + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
-                           + konf['sb_max_w']  # Maximale Entladeleistung SB
-                           - konf['ladeleistung_puffer_W']  # Einspeisepuffer
-                           )
-        else:
-            lade_soll_w = (sb_status_i['Production_W']  # PV-Leistung
-                           - sb_status_i['Consumption_W']  # Haus-Verbrauch inkl. go-E Ladeleistung
+    match konf['laden_prio']:
+        case 'Überschuss':
+            match sb_status_i['BatteryCharging'], sb_status_i['BatteryDischarging']:
+                case True, False:  # SonnenBatterie lädt, SB-Ladestrom muss beschützt werden
+                    lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
+                                   + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
+                                   + sb_status_i['Pac_total_W']  # Ladeleistung SB, negativ beim Aufladen, daher +
+                                   - konf['ladeleistung_puffer_W']  # Einspeisepuffer
+                                   )
+                case False, True:  # SonnenBatterie entlädt, in diesem Modus nicht erwünscht!
+                    lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
+                                   + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
+                                   - sb_status_i['Pac_total_W']  # Entladeleistung SB, positiv beim Entladen, daher -
+                                   - konf['ladeleistung_puffer_W']  # Einspeisepuffer
+                                   )
+                case False, False:  # SonnenBatterie idle
+                    lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
+                                   + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
+                                   - konf['ladeleistung_puffer_W']  # Einspeisepuffer
+                                   )
+        case 'PV':
+            lade_soll_w = (sb_status_i["Production_W"]  # Einspeiseleistung
+                           - sb_status_i["Consumption_W"]  # Verbrauch
                            + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
                            - konf['ladeleistung_puffer_W']  # Einspeisepuffer
                            )
-    elif konf['laden_prio'] == "frei":
-        lade_soll_w = 99999  # Symbolischer Wert
+        case 'PV+':
+            if sb_status_i['USOC'] > konf['min_batterie_soc']:
+                lade_soll_w = (sb_status_i['Production_W']  # PV-Leistung
+                               - sb_status_i['Consumption_W']  # Haus-Verbrauch inkl. go-E Ladeleistung
+                               + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
+                               + konf['sb_max_w']  # Maximale Entladeleistung SB
+                               - konf['ladeleistung_puffer_W']  # Einspeisepuffer
+                               )
+            else:
+                lade_soll_w = (sb_status_i['Production_W']  # PV-Leistung
+                               - sb_status_i['Consumption_W']  # Haus-Verbrauch inkl. go-E Ladeleistung
+                               + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
+                               - konf['ladeleistung_puffer_W']  # Einspeisepuffer
+                               )
+        case 'frei':
+            lade_soll_w = 99999  # Symbolischer Wert
 
     # Umrechnung Watt → Ampere inkl. aktuelle Leistungsfaktoren, falls es sie gibt
     if 0 not in goe_status_i['nrg'][0:3]:  # Charger an Drehstrom (3~) angeschlossen, Drehstrom-Ampere-berechnen
@@ -138,7 +140,7 @@ def goe_ladeleistung_bestimmen(sb_status_i: dict, goe_status_i: dict, ladekurve:
 
     lade_soll_amp = min(lade_soll_amp, int(goe_status_i['cbl']))  # Auf Anschlusswert deckeln
 
-    if goe_status_i['loe'] == "1":  # Falls Lastverteilung aktiv
+    if goe_status_i['loe'] == '1':  # Falls Lastverteilung aktiv
         lade_soll_amp = min(lade_soll_amp, int(goe_status_i['loa']))  # Auf max. Stromwert aus Lastverteilung deckeln
 
     lade_soll_amp = max(lade_soll_amp, konf['zoe_modus'] * 6)  # Falls Zoe-Modus aktiv: auf min 6A heben
@@ -158,7 +160,7 @@ def goe_ladeleistung_bestimmen(sb_status_i: dict, goe_status_i: dict, ladekurve:
 
     print(f'  ==>  Ladekurve A Soll: {lade_soll_amp}')
 
-    return {"A": lade_soll_amp, "W": lade_soll_w}
+    return {'A': lade_soll_amp, 'W': lade_soll_w}
 
 
 def goe_setzen(parameter: str, steuerwert: int, goe_status_i: dict, konf: dict):
@@ -187,8 +189,8 @@ def goe_setzen(parameter: str, steuerwert: int, goe_status_i: dict, konf: dict):
     if not parameter_kontrolle == 'rst' and not goe_status_i[parameter_kontrolle] == str(steuerwert):
         try:
             goe_return = requests.get(f'{goe_mqtt_url}{parameter}={steuerwert}', timeout=konf['wartezeit'])
-        except Exception as err:
-            log_event(f'Fehler {err} beim Setzen der Daten am Go-eCharger', konf)
+        except Exception as connect_err:
+            log_event(f'Fehler {connect_err} beim Setzen der Daten am Go-eCharger', konf)
             return False
     else:
         if parameter_kontrolle == 'amp':
@@ -238,9 +240,9 @@ def log_nrg(objekt: str, objekt_status: dict, konf: dict):
             except FileNotFoundError:  # Der Ordner wurde während der Laufzeit gelöscht
                 print('!!!!Der Unterordner <logs> existiert nicht im Arbeitsverzeichnis, bitte erstellen!')
                 raise
-            except Exception as err:
+            except Exception as logfile_err:
                 print(f'!!!!Fehler beim Arbeiten mit <{log_name}>:')
-                print(err)
+                print(logfile_err)
                 raise
 
         try:
@@ -249,9 +251,9 @@ def log_nrg(objekt: str, objekt_status: dict, konf: dict):
                 for wert in objekt_status.values():
                     log.write(f'{wert};')
                 log.write('\n')
-        except Exception as err:
+        except Exception as logwrite_err:
             print(f'!!!!Fehler beim Arbeiten mit <{log_name}>:')
-            print(err)
+            print(logwrite_err)
             raise
 
 
@@ -279,9 +281,9 @@ def log_event(meldung: str, konf: dict):
                 print(f'    Aktualisiere bestehende Logdatei <{log_name}>')
                 with open(log_name, 'a') as log:
                     log.write('\n' + ('-' * 35) + '\n')
-            except Exception as err:
+            except Exception as logfile_err:
                 print(f'!!!!Fehler beim Arbeiten mit <{log_name}>:')
-                print(err)
+                print(logfile_err)
                 raise
             finally:
                 with open(log_name, 'a') as log:
@@ -293,9 +295,9 @@ def log_event(meldung: str, konf: dict):
         try:
             with open(log_name, 'a') as log:
                 log.write(f'{time.strftime("%H:%M:%S")}: {meldung}\n')
-        except Exception as err:
+        except Exception as logwrite_err:
             print(f'!!!!Fehler beim Arbeiten mit Logdatei <{log_name}>:')
-            print(err)
+            print(logwrite_err)
             raise
 
 
@@ -334,9 +336,10 @@ def konsole_leeren():
     """Leert die Konsole auf div. Plattformen. Wird im Projekt aktuell nicht genutzt."""
     import os
 
-    if os.name == 'nt':
-        os.system('cls')
-    elif os.name == 'posix':
-        os.system('clear')
-    else:
-        print('#' * 35)
+    match os.name:
+        case 'nt':
+            os.system('cls')
+        case 'posix':
+            os.system('clear')
+        case _:
+            print('#' * 35)
