@@ -1,0 +1,35 @@
+# Konfigurationsvariablen für das SB-Go-E Überschussladen
+
+# TOML ist nicht Python: für Strings " statt ' benutzen, und Bools sind ausschließlich lowercase!
+
+goe_adresse = "go-echarger.fritz.box"  # Lokale IP oder (lokaler) DNS-Name
+sb_adresse = "sb-238729.fritz.box"  # Lokale IP oder DNS-Name
+ladeleistung_puffer_W = 100  # Größe der zur Verfügung stehenden Leistung, die nicht genutzt in W
+wartezeit = 10  # Wert in Sekunden, den das Programm bis zum nächsten Versuch wartet. Standard 10 wegen rate limiting und Regelträgheit
+min_batterie_soc = 40  # Batterie-Ladestand (USOC) in %, der bei höheren Ladeprioritäten nicht angetastet wird
+sb_max_w = 4600  # Maximale Entladeleistung der SonnenBatterie in W
+sprung_max_a = 1  # Maximale Menge an Ampere, die der Strom pro Zyklus verändert werden darf
+logging_nrg = true  # Aktiviert oder deaktiviert das Schreiben der Logdateien für Go-E- und SB-Daten
+logging_events = true  # Steuert das Schreiben der Logdatei für die Programm-Meldungen
+simulieren = true  # Steuert den Simulationsmodus, bei dem keine Kommandos an Go-E gesendet werden
+zoe_modus = true  # Im Zoe-Modus wird das Laden bei zu wenig Leistung nicht deaktiviert, sondern auf 6A gehalten
+laden_prio = "Überschuss"  # Lademodus, Erklärung siehe folgende Deklaration zu laden_prio_text
+
+[laden_prio_text]
+"Überschuss" = "Nur Strom, der sonst eingespeist würde, wird zum Auto-Laden genutzt"
+"PV" = "Das Auto-Laden hat Vorrang vor dem SonnenBatterie-Laden"
+"PV+SB" = "Das Auto-Laden entlädt die Sonnen-Batterie bis auf Schutzniveau, danach wie \"PV\" "
+"frei" = "Das Auto-Laden nutzt alle zur Verfügung stehende Anschlussleistung"
+
+[ladekurve]  # Vorkonfiguriert für Renault Zoe R110 Generation 1
+6 = 250
+7 = 2500
+8 = 3500
+9 = 4000
+10 = 4500
+11 = 5100
+12 = 6200
+13 = 7200
+14 = 7800
+15 = 8400
+16 = 9400
