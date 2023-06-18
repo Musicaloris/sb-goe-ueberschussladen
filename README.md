@@ -3,7 +3,7 @@
 
 Ein Python-Skript zum Photovoltaik-Überschussladen von Elektrofahrzeugen. Alle beteiligten Geräte (Skript-Host, SonnenBatterie und Go-eCharger) müssen sich in einem Netzwerk befinden, innerhalb dessen der Skript-Host beide erreichen kann. Es wird keine Cloud-API genutzt, nur lokale Kommunikation.
 
-Entwickelt, um ein Projekt = eine Motivation zum Python-Lernen zu haben - im Wissen, dass es fertige Projekte gibt, die das alles schon mal gelöst haben :)
+Entwickelt, um ein Projekt = eine Motivation zum Python-Lernen zu haben - im Wissen, dass es fertige Projekte gibt, die das alles schon mal gelöst haben - siehe zB https://solaranzeige.de/ :)
 
 Momentan läuft es auf Windows, und sollte (mit ggf. minimalen Anpassungen) auch auf Linux (Desktop) laufen. Auf Android läuft es wegen der verwendeten keyboard-Library nicht - diese wird aber nur zum Beenden genutzt, ein keyboard-loser Fork wäre also schnell erstellt (müsste dann zum Beenden gekillt werden oder so).
 
