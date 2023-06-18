@@ -128,7 +128,7 @@ while forrest == 'run':  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
     print('-' * 10)
     print('Meldungen:')
 
-    # Liegt ein Fehler am go-E an? Automatischer Reset-Versuch.
+    # Liegt ein Fehler am go-E an? Automatischer Reset-Versuch. Ungetestet.
     if not goe_status['err'] == '0':
         log_event(f'Am go-eCharger liegt ein Fehler an: {konf["goe_err"][goe_status["err"]]}', konf)
         log_event('Versuche automatischen Reset / Reboot über MQTT.', konf)
@@ -173,7 +173,7 @@ while forrest == 'run':  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
             for datenpunkt_a, datenpunkt_w in konf['ladekurve'].items():
                 ladekurve[str(datenpunkt_a)] = datenpunkt_w
 
-    # Befindet sich der Go-E im Stop-Modus (wurde eine maximale Lademenge definiert)?
+    # Befindet sich der Go-E im Stop-Modus (wurde eine maximale Lademenge definiert)? Ungetestet
     if goe_status['stp'] == '2':
         goe_stop_laden = True
         log_event(f'Automatische Abschaltung nach {goe_status["dwo"] / 10} kWh ist aktiviert.', konf)
@@ -208,7 +208,7 @@ while forrest == 'run':  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
                           '.', konf)
             else:
                 log_event('Fehler beim Setzen der Ladeleistung!', konf)
-        else:  # Wenn Laden noch nicht erlaubt war, Ladeleistung setzen und Laden erlauben
+        else:  # Wenn Laden noch nicht erlaubt war, Ladeleistung setzen und Laden erlauben. Ungetestet
             if goe_setzen('amx', ladeleistung['A'], goe_status, konf) and goe_setzen('alw', 1, goe_status, konf):
                 log_event(f'{"[simuliert] " * konf["simulieren"]}Ladevorgang wurde mit {ladeleistung["A"]} A gestartet '
                           f'/ wieder aufgenommen!', konf)

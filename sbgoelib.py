@@ -84,7 +84,7 @@ def goe_ladeleistung_bestimmen(sb_status_i: dict, goe_status_i: dict, ladekurve:
     print(f'Ladeleistung wird bestimmt im Modus {konf["laden_prio"]}: {konf["laden_prio_text"][konf["laden_prio"]]}.\n')
 
     match konf['laden_prio']:
-        case 'Überschuss':
+        case 'Überschuss':  # Getestet
             match sb_status_i['BatteryCharging'], sb_status_i['BatteryDischarging']:
                 case True, False:  # SonnenBatterie lädt, SB-Ladestrom muss beschützt werden
                     lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
@@ -103,13 +103,13 @@ def goe_ladeleistung_bestimmen(sb_status_i: dict, goe_status_i: dict, ladekurve:
                                    + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
                                    - konf['ladeleistung_puffer_W']  # Einspeisepuffer
                                    )
-        case 'PV':
+        case 'PV':  # Getestet
             lade_soll_w = (sb_status_i["Production_W"]  # Einspeiseleistung
                            - sb_status_i["Consumption_W"]  # Verbrauch
                            + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
                            - konf['ladeleistung_puffer_W']  # Einspeisepuffer
                            )
-        case 'PV+':
+        case 'PV+':  # Ungetestet
             if sb_status_i['USOC'] > konf['min_batterie_soc']:
                 lade_soll_w = (sb_status_i['Production_W']  # PV-Leistung
                                - sb_status_i['Consumption_W']  # Haus-Verbrauch inkl. go-E Ladeleistung
@@ -123,15 +123,15 @@ def goe_ladeleistung_bestimmen(sb_status_i: dict, goe_status_i: dict, ladekurve:
                                + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
                                - konf['ladeleistung_puffer_W']  # Einspeisepuffer
                                )
-        case 'frei':
+        case 'frei':  # Ungetestet
             lade_soll_w = 99999  # Symbolischer Wert
 
     # Umrechnung Watt → Ampere inkl. aktuelle Leistungsfaktoren, falls es sie gibt
     if 0 not in goe_status_i['nrg'][0:3]:  # Charger an Drehstrom (3~) angeschlossen, Drehstrom-Ampere-berechnen
         lade_soll_amp = lade_soll_w / (3 ** 0.5 * goe_u)
         print(f'Formel A Soll: {lade_soll_amp}', end='')
-    else:  # Charger an Wechselstrom (1~) angeschlossen, Wechselstrom-Ampere berechnen
-        lade_soll_amp = lade_soll_w / goe_status_i['nrg'][0]
+    else:  # Charger an Wechselstrom (1~) angeschlossen, Wechselstrom-Ampere berechnen.
+        lade_soll_amp = lade_soll_w / goe_status_i['nrg'][0]  # Ungetestet
 
     lade_soll_amp = math.floor(lade_soll_amp)  # Abrunden und in int konvertieren
 
@@ -140,7 +140,7 @@ def goe_ladeleistung_bestimmen(sb_status_i: dict, goe_status_i: dict, ladekurve:
 
     lade_soll_amp = min(lade_soll_amp, int(goe_status_i['cbl']))  # Auf Anschlusswert deckeln
 
-    if goe_status_i['loe'] == '1':  # Falls Lastverteilung aktiv
+    if goe_status_i['loe'] == '1':  # Falls Lastverteilung aktiv. Ungetestet
         lade_soll_amp = min(lade_soll_amp, int(goe_status_i['loa']))  # Auf max. Stromwert aus Lastverteilung deckeln
 
     lade_soll_amp = max(lade_soll_amp, konf['zoe_modus'] * 6)  # Falls Zoe-Modus aktiv: auf min 6A heben
