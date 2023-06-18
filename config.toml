@@ -15,12 +15,6 @@ simulieren = true  # Steuert den Simulationsmodus, bei dem keine Kommandos an Go
 zoe_modus = true  # Im Zoe-Modus wird das Laden bei zu wenig Leistung nicht deaktiviert, sondern auf 6A gehalten
 laden_prio = "Überschuss"  # Lademodus, Erklärung siehe folgende Deklaration zu laden_prio_text
 
-[laden_prio_text]
-"Überschuss" = "Nur Strom, der sonst eingespeist würde, wird zum Auto-Laden genutzt"
-"PV" = "Das Auto-Laden hat Vorrang vor dem SonnenBatterie-Laden"
-"PV+SB" = "Das Auto-Laden entlädt die Sonnen-Batterie bis auf Schutzniveau, danach wie \"PV\" "
-"frei" = "Das Auto-Laden nutzt alle zur Verfügung stehende Anschlussleistung"
-
 [ladekurve]  # Vorkonfiguriert für Renault Zoe R110 Generation 1
 6 = 250
 7 = 2500
@@ -33,3 +27,16 @@ laden_prio = "Überschuss"  # Lademodus, Erklärung siehe folgende Deklaration z
 14 = 7800
 15 = 8400
 16 = 9400
+
+[laden_prio_text]
+"Überschuss" = "Nur Strom, der sonst eingespeist würde, wird zum Auto-Laden genutzt"
+"PV" = "Das Auto-Laden hat Vorrang vor dem SonnenBatterie-Laden"
+"PV+SB" = "Das Auto-Laden entlädt die Sonnen-Batterie bis auf Schutzniveau, danach wie \"PV\" "
+"frei" = "Das Auto-Laden nutzt alle zur Verfügung stehende Anschlussleistung"
+
+[goe_err]
+"1" = "RCCB (Fehlerstromschutzschalter)"
+"3" = "PHASE (Phasenstörung)"
+"8" = "NO_GROUND (Erdungserkennung)"
+"10" = "INTERNAL (sonstiges)"
+"default" = "INTERNAL (sonstiges / default)"

@@ -1,3 +1,4 @@
-/logs/**
-/.idea/**
-/venv/**
+/logs/
+/venv/
+/__pycache__/
+/.idea/
