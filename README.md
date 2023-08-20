@@ -10,14 +10,14 @@ Momentan läuft es auf Windows, und sollte (mit ggf. minimalen Anpassungen) auch
 Langfristig soll es energiesparend auf einem Raspberry o.Ä. laufen. Dafür muss aber die (remote- oder GUI-) Steuerung noch anders werden (und ich muss erstmal einen Raspberry in die Finger bekommen).
 
 Meine Entwicklungs- und Test-Konfiguration:
-- Windows 10 / Python 3.11
+- Windows 10 / Python 3.11.4
 - SonnenBatterie 10
   - SonnenModule 4
   - Software Version 1.9.4.2021374
   - JSON API v2 Methode "status"
 - Go-eCharger Home+ 22kW
   - Hardware Version 2
-  - Firmware Version 041
+  - Firmware Version 041 + 042.0
   - API v1
 - Renault Zoe R110 Generation 1
 
