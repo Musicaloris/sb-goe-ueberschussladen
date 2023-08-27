@@ -3,11 +3,11 @@
 
 Ein Python-Skript zum Photovoltaik-Überschussladen von Elektrofahrzeugen. Alle beteiligten Geräte (Skript-Host, SonnenBatterie und Go-eCharger) müssen sich in einem Netzwerk befinden, innerhalb dessen der Skript-Host beide erreichen kann. Es wird keine Cloud-API genutzt, nur lokale Kommunikation.
 
-Entwickelt, um ein Projekt = eine Motivation zum Python-Lernen zu haben - im Wissen, dass es fertige Projekte gibt, die das alles schon mal gelöst haben - siehe z. B. https://solaranzeige.de/ :)
+Entwickelt, um ein Projekt = eine Motivation zum Python-Lernen zu haben - im Wissen, dass es fertige Projekte gibt, die das alles schon mal gelöst haben - siehe z.B. https://solaranzeige.de/ :)
 
-Momentan läuft es auf den u.g. Entwicklungsplattformen.
+Unter Linux müssen für den Unterordner logs die Schreibrechte freigegeben werden, ich habe das über `sudo chmod 777 logs` gemacht. Alternativ kann das Skript mit root-Rechten aufgerufen werden, das würde ich aber eher nicht empfehlen, oder das Logging kann in der `config.toml` deaktiviert werden.
 
-Meine Entwicklungs- und Test-Konfiguration:
+Meine Entwicklungs- und Test-Umgebung:
 - Windows 10 / Python 3.11.4
 - Raspberry Pi4B (4GB RAM) mit PiOS 11 (bullseye) / Python 3.9.2
 - SonnenBatterie 10
