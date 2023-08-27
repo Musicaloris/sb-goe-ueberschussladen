@@ -7,10 +7,10 @@ Webseite Musicaloris: https://www.musicaloris.de/"""
 import os  # Für das Leerräumen der Konsole und Dateioperationen
 import sys  # Für Systemoperationen
 import time  # Für das Setzen von Zeitstempeln und Wartefunktionen
-import tomllib  # Für das Einlesen der Konfigurationsdatei
 
 # 3rd Party Libraries importieren
 import keyboard  # Für das Abfragen, ob eine Taste gedrückt ist
+import tomli  # Für das Einlesen der Konfigurationsdatei
 import requests  # Für das Abrufen der Daten
 
 # Funktionen-Library dieses Projekts importieren
@@ -20,8 +20,8 @@ from sbgoelib import *
 # Konfigurationsdatei einlesen
 try:
     with open('config.toml', 'rb') as konfiguration_datei:
-        konf = tomllib.load(konfiguration_datei)
-except tomllib.TOMLDecodeError as toml_err:
+        konf = tomli.load(konfiguration_datei)
+except tomli.TOMLDecodeError as toml_err:
     print(f'Fehler beim Einlesen der Konfigurationsdatei <config.toml>. Ist die Datei gemäß TOML-Standard kodiert?')
     print(f'Fehlermeldung: {toml_err}')
     sys.exit(1)
@@ -155,23 +155,22 @@ while forrest == 'run':  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
             continue
 
     # ist ein Auto angeschlossen und bereit?
-    match goe_status['car']:
-        case '1':
-            log_event('Kein Fahrzeug am Go-eCharger angeschlossen.', konf)
-        case '2':
-            if goe_status["nrg"][11] * 10 == 0:
-                log_event('Fahrzeug ist am Go-eCharger angeschlossen und bereit zum Laden.', konf)
-            else:
-                log_event('Fahrzeug ist am Go-eCharger angeschlossen und lädt.', konf)
-        case '3':
-            log_event('Go-eCharger wartet auf Fahrzeug.', konf)
-            zyklus_timestamp = time.time()
-            abwarten(False, konf, zyklus_timestamp)
-        case '4':
-            log_event('Go-eCharger meldet Ladung beendet (manuell, durch Go-E, durch Auto) & Auto angeschlossen.', konf)
-            # Default-Ladekurve laden, da beim Beenden Ladeleistung und Strom entkoppelt sind
-            for datenpunkt_a, datenpunkt_w in konf['ladekurve'].items():
-                ladekurve[str(datenpunkt_a)] = datenpunkt_w
+    if goe_status['car'] == '1':
+        log_event('Kein Fahrzeug am Go-eCharger angeschlossen.', konf)
+    elif goe_status['car'] == '2':
+        if goe_status["nrg"][11] * 10 == 0:
+            log_event('Fahrzeug ist am Go-eCharger angeschlossen und bereit zum Laden.', konf)
+        else:
+            log_event('Fahrzeug ist am Go-eCharger angeschlossen und lädt.', konf)
+    elif goe_status['car'] == '3':
+        log_event('Go-eCharger wartet auf Fahrzeug.', konf)
+        zyklus_timestamp = time.time()
+        abwarten(False, konf, zyklus_timestamp)
+    elif goe_status['car'] == '4':
+        log_event('Go-eCharger meldet Ladung beendet & Auto angeschlossen.', konf)
+        # Default-Ladekurve laden, da beim Beenden Ladeleistung und Strom entkoppelt sind
+        for datenpunkt_a, datenpunkt_w in konf['ladekurve'].items():
+            ladekurve[str(datenpunkt_a)] = datenpunkt_w
 
     # Befindet sich der Go-E im Stop-Modus (wurde eine maximale Lademenge definiert)? Ungetestet
     if goe_status['stp'] == '2':

@@ -83,48 +83,47 @@ def goe_ladeleistung_bestimmen(sb_status_i: dict, goe_status_i: dict, ladekurve:
 
     print(f'Ladeleistung wird bestimmt im Modus {konf["laden_prio"]}: {konf["laden_prio_text"][konf["laden_prio"]]}.\n')
 
-    match konf['laden_prio']:
-        case 'Überschuss':  # Getestet
-            match sb_status_i['BatteryCharging'], sb_status_i['BatteryDischarging']:
-                case True, False:  # SonnenBatterie lädt, SB-Ladestrom muss beschützt werden
-                    lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
-                                   + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
-                                   + sb_status_i['Pac_total_W']  # Ladeleistung SB, negativ beim Aufladen, daher +
-                                   - konf['ladeleistung_puffer_W']  # Einspeisepuffer
-                                   )
-                case False, True:  # SonnenBatterie entlädt, in diesem Modus nicht erwünscht!
-                    lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
-                                   + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
-                                   - sb_status_i['Pac_total_W']  # Entladeleistung SB, positiv beim Entladen, daher -
-                                   - konf['ladeleistung_puffer_W']  # Einspeisepuffer
-                                   )
-                case False, False:  # SonnenBatterie idle
-                    lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
-                                   + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
-                                   - konf['ladeleistung_puffer_W']  # Einspeisepuffer
-                                   )
-        case 'PV':  # Getestet
-            lade_soll_w = (sb_status_i["Production_W"]  # Einspeiseleistung
-                           - sb_status_i["Consumption_W"]  # Verbrauch
+    if konf['laden_prio'] == 'Überschuss':  # Getestet
+        battery_status = sb_status_i['BatteryCharging'], sb_status_i['BatteryDischarging']
+        if battery_status == (True, False):  # SonnenBatterie lädt, SB-Ladestrom muss beschützt werden
+            lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
+                           + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
+                           + sb_status_i['Pac_total_W']  # Ladeleistung SB, negativ beim Aufladen, daher +
+                           - konf['ladeleistung_puffer_W']  # Einspeisepuffer
+                           )
+        elif battery_status == (False, True):  # SonnenBatterie entlädt, in diesem Modus nicht erwünscht!
+            lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
+                           + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
+                           - sb_status_i['Pac_total_W']  # Entladeleistung SB, positiv beim Entladen, daher -
+                           - konf['ladeleistung_puffer_W']  # Einspeisepuffer
+                           )
+        elif battery_status == (False, False):  # SonnenBatterie idle
+            lade_soll_w = (sb_status_i["GridFeedIn_W"]  # Einspeiseleistung
                            + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
                            - konf['ladeleistung_puffer_W']  # Einspeisepuffer
                            )
-        case 'PV+':  # Ungetestet
-            if sb_status_i['USOC'] > konf['min_batterie_soc']:
-                lade_soll_w = (sb_status_i['Production_W']  # PV-Leistung
-                               - sb_status_i['Consumption_W']  # Haus-Verbrauch inkl. go-E Ladeleistung
-                               + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
-                               + konf['sb_max_w']  # Maximale Entladeleistung SB
-                               - konf['ladeleistung_puffer_W']  # Einspeisepuffer
-                               )
-            else:
-                lade_soll_w = (sb_status_i['Production_W']  # PV-Leistung
-                               - sb_status_i['Consumption_W']  # Haus-Verbrauch inkl. go-E Ladeleistung
-                               + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
-                               - konf['ladeleistung_puffer_W']  # Einspeisepuffer
-                               )
-        case 'frei':  # Ungetestet
-            lade_soll_w = 99999  # Symbolischer Wert
+    elif konf['laden_prio'] == 'PV':  # Getestet
+        lade_soll_w = (sb_status_i["Production_W"]  # Einspeiseleistung
+                       - sb_status_i["Consumption_W"]  # Verbrauch
+                       + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
+                       - konf['ladeleistung_puffer_W']  # Einspeisepuffer
+                       )
+    elif konf['laden_prio'] == 'PV+':  # Ungetestet
+        if sb_status_i['USOC'] > konf['min_batterie_soc']:
+            lade_soll_w = (sb_status_i['Production_W']  # PV-Leistung
+                           - sb_status_i['Consumption_W']  # Haus-Verbrauch inkl. go-E Ladeleistung
+                           + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
+                           + konf['sb_max_w']  # Maximale Entladeleistung SB
+                           - konf['ladeleistung_puffer_W']  # Einspeisepuffer
+                           )
+        else:
+            lade_soll_w = (sb_status_i['Production_W']  # PV-Leistung
+                           - sb_status_i['Consumption_W']  # Haus-Verbrauch inkl. go-E Ladeleistung
+                           + goe_leistung_w  # Ladeleistung go-E addieren, weil sie zur Verfügung steht
+                           - konf['ladeleistung_puffer_W']  # Einspeisepuffer
+                           )
+    elif konf['laden_prio'] == 'frei':  # Ungetestet
+        lade_soll_w = 99999  # Symbolischer Wert
 
     # Umrechnung Watt → Ampere inkl. aktuelle Leistungsfaktoren, falls es sie gibt
     if 0 not in goe_status_i['nrg'][0:3]:  # Charger an Drehstrom (3~) angeschlossen, Drehstrom-Ampere-berechnen
@@ -336,10 +335,9 @@ def konsole_leeren():
     """Leert die Konsole auf div. Plattformen. Wird im Projekt aktuell nicht genutzt."""
     import os
 
-    match os.name:
-        case 'nt':
-            os.system('cls')
-        case 'posix':
-            os.system('clear')
-        case _:
-            print('#' * 35)
+    if os.name == 'nt':
+        os.system('cls')
+    elif os.name == 'posix':
+        os.system('clear')
+    else:
+        print('#' * 35)
