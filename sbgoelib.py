@@ -308,10 +308,9 @@ def abwarten(fehler: bool, konf: dict, zyklus_timestamp: float):
     :param zyklus_timestamp: Zeitstempel des aktuellen Zyklus'
     """
     import time
-    import keyboard
 
     print('-' * 10)
-    print('Zum Beenden des Programms Strg + Ä drücken.')
+    print('Zum Beenden des Programms Strg + C drücken.')
 
     if fehler:
         print('Nächster Versuch in ', end='', flush=True)
@@ -321,8 +320,7 @@ def abwarten(fehler: bool, konf: dict, zyklus_timestamp: float):
     countdown = konf['wartezeit']
     countdown_zuletzt = int(konf['wartezeit'] - (time.time() - zyklus_timestamp))
     print(f'{countdown_zuletzt}... ', end='', flush=True)
-    while time.time() < zyklus_timestamp + konf['wartezeit'] and countdown > 0 \
-            and not keyboard.is_pressed('ctrl+ä'):
+    while time.time() < zyklus_timestamp + konf['wartezeit'] and countdown > 0:
         time.sleep(0.1)
         countdown = int(konf['wartezeit'] - (time.time() - zyklus_timestamp))
         if countdown < countdown_zuletzt:

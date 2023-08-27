@@ -9,7 +9,6 @@ import sys  # Für Systemoperationen
 import time  # Für das Setzen von Zeitstempeln und Wartefunktionen
 
 # 3rd Party Libraries importieren
-import keyboard  # Für das Abfragen, ob eine Taste gedrückt ist
 import tomli  # Für das Einlesen der Konfigurationsdatei
 import requests  # Für das Abrufen der Daten
 
@@ -46,7 +45,6 @@ goe_status = {'objekt': 'Go-E', 'zeitstempel': zyklus_timestamp}  # Standard-Obj
 forrest = 'run'  # Variable zur Kontrolle der Hauptschleife
 goe_stop_laden = False
 ladeleistung = {'W': 'undefiniert'}  # Standard-Objektzustand
-keyboard.add_hotkey('ctrl+ä', hotkey)  # Hotkey zum regulären Beenden der Hauptschleife aktivieren
 ladekurve = {0: 0}  # Standard-Objektzustand
 
 # Ladekurve aus Konfigurationsdatei laden
@@ -91,10 +89,11 @@ while forrest == 'run':  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
     sb_status_puffer = daten_holen('SB', sb_status, sb_status_url, konf)
 
     # Konnten die Daten erfolgreich abgeholt werden?
-    if 'status_code' in goe_status and 'status_code' in sb_status:  # Daten holen war iO, ab in die Status-Objekte damit
+    if 'status_code' in goe_status_puffer and 'status_code' in sb_status_puffer:  # Daten holen war iO
         goe_status = goe_status_puffer
         sb_status = sb_status_puffer
     else:  # Daten sind invalide, vermutlich Fehler beim Holen
+        log_event("Datenobjekt(e) ungültig? Abwarten und nochmal versuchen...", konf)
         zyklus_timestamp = time.time()
         abwarten(True, konf, zyklus_timestamp)
         continue
@@ -221,7 +220,10 @@ while forrest == 'run':  # Programm-Hauptschleife. Ist wie eine Schachtel Pralin
         log_nrg('sb', sb_status, konf)
 
     zyklus_timestamp = time.time()  # Zeitstempel erneuern
-    abwarten(False, konf, zyklus_timestamp)
+    try:
+        abwarten(False, konf, zyklus_timestamp)
+    except KeyboardInterrupt:
+        forrest = "Strg+C wurde gedrückt"
 
     print('\n' * 2)
     # Ende des Hauptschleife-while-Loop-Codeblocks
@@ -236,5 +238,3 @@ else:  # Block für das reguläre Beenden der Hauptschleife, else gehört noch z
 if forrest == 'run':
     print('-' * 35)
     log_event(f'Das Programm wurde unerwartet beendet.', konf)
-
-keyboard.remove_all_hotkeys()  # Alle Hotkeys deaktivieren
