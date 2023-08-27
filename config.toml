@@ -2,8 +2,8 @@
 
 # TOML ist nicht Python: für Strings " statt ' benutzen, und Bools sind ausschließlich lowercase!
 
-goe_adresse = "go-echarger.fritz.box"  # Lokale IP oder (lokaler) DNS-Name
-sb_adresse = "sb-238729.fritz.box"  # Lokale IP oder DNS-Name
+goe_adresse = "192.168.181.13"  # Lokale IP oder (lokaler) DNS-Name
+sb_adresse = "192.168.181.4"  # Lokale IP oder DNS-Name
 ladeleistung_puffer_W = 100  # Größe der zur Verfügung stehenden Leistung, die nicht genutzt in W
 wartezeit = 10  # Wert in Sekunden, den das Programm bis zum nächsten Versuch wartet. Standard 10 wegen rate limiting und Regelträgheit
 min_batterie_soc = 40  # Batterie-Ladestand (USOC) in %, der bei höheren Ladeprioritäten nicht angetastet wird
@@ -28,13 +28,13 @@ laden_prio = "Überschuss"  # Lademodus, Erklärung siehe folgende Deklaration z
 15 = 8400
 16 = 9400
 
-[laden_prio_text]
+[laden_prio_text]  # Hope u know what ur doin :)
 "Überschuss" = "Nur Strom, der sonst eingespeist würde, wird zum Auto-Laden genutzt"
 "PV" = "Das Auto-Laden hat Vorrang vor dem SonnenBatterie-Laden"
 "PV+SB" = "Das Auto-Laden entlädt die Sonnen-Batterie bis auf Schutzniveau, danach wie \"PV\" "
 "frei" = "Das Auto-Laden nutzt alle zur Verfügung stehende Anschlussleistung"
 
-[goe_err]
+[goe_err]  # Hope u know what ur doin :)
 "1" = "RCCB (Fehlerstromschutzschalter)"
 "3" = "PHASE (Phasenstörung)"
 "8" = "NO_GROUND (Erdungserkennung)"
