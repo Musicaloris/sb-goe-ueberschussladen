@@ -224,7 +224,7 @@ def log_nrg(objekt: str, objekt_status: dict, konf: dict):
     import os
 
     if konf['logging_nrg']:
-        log_name = f'logs\\{time.strftime("%Y-%m-%d")}-{objekt}-log.csv'
+        log_name = f'logs/{time.strftime("%Y-%m-%d")}-{objekt}-log.csv'
 
         if not os.path.isfile(log_name):
             try:
@@ -267,7 +267,7 @@ def log_event(meldung: str, konf: dict):
 
     print(f'    {meldung}')
     if konf['logging_events']:
-        log_name = f'logs\\{time.strftime("%Y-%m-%d")}-sys-log.txt'
+        log_name = f'logs/{time.strftime("%Y-%m-%d")}-sys-log.csv'
 
         # Aktuelle Konfiguration in Logdatei-Kopf schreiben beim Start, falls nötig Datei erstellen
         if not os.path.isfile(log_name):
