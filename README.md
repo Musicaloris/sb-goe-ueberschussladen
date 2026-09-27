@@ -1,3 +1,5 @@
+Mein eigener Fork dieses Projektes, zur Modernisierung und mit neuerem go-e charger auf codeberg.org: [pv-sonnen-goe-surplus-charging](https://codeberg.org/Musicaloris/pv-sonnen-goe-surplus-charging)
+
 # SB-GoE-Überschussladen
 ## Überschussladen mit einer SonnenBatterie und einem Go-eCharger
 
